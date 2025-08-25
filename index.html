@@ -123,27 +123,44 @@
             <h2 class="text-2xl mb-4 text-indigo-300">遊び方</h2>
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ゲームの目的</h3>
             <p>交互に「ソース」と呼ばれるコマを盤面に配置し、ゲーム終了時に自分の色のマスが相手より多ければ勝利です。</p>
-            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ゲームの流れ</h3>
-            <p>自分のターンになったら、空いているマスを一つ選び、「ソース」を配置します。</p>
+            
+            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">操作方法</h3>
+            <div class="grid md:grid-cols-2 gap-4 text-left">
+                <div>
+                    <h4 class="text-lg font-semibold mb-1">PCの場合</h4>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>情報表示:</strong> マスにカーソルを合わせる</li>
+                        <li><strong>配置:</strong> マスをクリック</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-1">スマートフォンの場合</h4>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>情報表示:</strong> マスを1回タップ</li>
+                        <li><strong>配置:</strong> 同じマスを素早く2回タップ</li>
+                    </ul>
+                </div>
+            </div>
+
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ソースとRay（光線）</h3>
-            <ul class="list-disc list-inside space-y-2">
+            <ul class="list-disc list-inside space-y-2 text-left">
                 <li>ソースを置くとき、上下左右の4方向から1〜4つの方向を選びます。</li>
                 <li>ソースは選んだ方向に盤面の端まで届く「Ray」を放ちます。</li>
                 <li>Rayが通過したマスは、そのプレイヤーの色に染まります。Rayが多く重なるほど、色は濃くなります。</li>
                 <li>相手のRayと重なったマスは、Rayの数が多い方の色になります。同数の場合はどちらの色にもなりません。</li>
             </ul>
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ソースのライフと配置ルール</h3>
-            <ul class="list-disc list-inside space-y-2">
+            <ul class="list-disc list-inside space-y-2 text-left">
                 <li>ソースには「ライフ」があります。ライフは <code class="bg-gray-800 px-1 rounded">5 - 選んだ方向の数</code> で決まります。（例：2方向ならライフは3）</li>
                 <li>ソースを置けるのは、<code class="bg-gray-800 px-1 rounded">(相手のRay数) - (自分のRay数) < これから置くソースのライフ</code> という条件を満たすマスだけです。</li>
             </ul>
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ソースの消滅（連鎖）</h3>
-            <ul class="list-disc list-inside space-y-2">
+            <ul class="list-disc list-inside space-y-2 text-left">
                 <li>ソースを置いた後、盤面にある全てのソースの場所で <code class="bg-gray-800 px-1 rounded">(相手のRay数) ≧ (そのソースのライフ)</code> になっていると、そのソースは消滅します。</li>
                 <li>ソースが消えるとRayの状況が変化し、それによって別のソースが消えることもあります（連鎖）。</li>
             </ul>
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">特殊ルール</h3>
-            <ul class="list-disc list-inside space-y-2">
+            <ul class="list-disc list-inside space-y-2 text-left">
                 <li><strong>初期ターン制限:</strong> 最初のターンだけは、2方向以上を選択する必要があります。（4x4では各プレイヤー1ターン目のみ、6x6では各2ターン目まで）</li>
                 <li><strong>ターン制限:</strong> 4x4では40ターン、6x6では90ターンが経過すると、その時点のマス数で勝敗が決まります。</li>
                 <li><strong>連続パス:</strong> 2ターン連続でパス（置けるマスがない）をすると、そのプレイヤーの負けになります。</li>
@@ -767,3 +784,4 @@
     </script>
 </body>
 </html>
+
