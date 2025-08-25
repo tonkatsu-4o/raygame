@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RayGame</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .direction-checkbox:checked + .direction-label, .size-radio:checked + .size-label {
+            background-color: #4f46e5; border-color: #a5b4fc; color: white;
+        }
+        .cell { aspect-ratio: 1 / 1; transition: background-color 0.3s ease-in-out; }
+        .source { transition: all 0.3s ease; animation: place-anim 0.3s ease-out; }
+        @keyframes place-anim { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #source-tooltip { pointer-events: none; }
+        .cpu-thinking, .auto-playing { cursor: wait; }
+        #board-wrapper { touch-action: manipulation; } /* スマホでのダブルタップズームを無効化 */
+    </style>
+</head>
+<body class="bg-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-2 sm:p-4">
+
+    <!-- プレイモード選択画面 -->
+    <div id="play-mode-screen" class="w-full max-w-md mx-auto text-center">
+        <h1 class="text-5xl font-bold text-indigo-300 mb-8">RayGame</h1>
+        <div class="bg-gray-700/50 p-8 rounded-lg space-y-4">
+            <button id="local-play-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
+                ローカル対戦
+            </button>
+            <button id="online-play-button" class="w-full bg-gray-500 cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg text-lg opacity-50">
+                オンライン対戦 (準備中)
+            </button>
+        </div>
+    </div>
+
+    <!-- ゲーム設定画面 -->
+    <div id="game-setup-screen" class="hidden w-full max-w-md mx-auto text-center">
+        <h1 class="text-5xl font-bold text-indigo-300 mb-8">Game Setup</h1>
+        <div class="bg-gray-700/50 p-8 rounded-lg">
+            <h2 class="text-2xl mb-4">Board Size</h2>
+            <div class="flex justify-center space-x-4 mb-6">
+                <div><input type="radio" name="board-size" id="size-4" value="4" class="size-radio hidden"><label for="size-4" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">4x4</label></div>
+                <div><input type="radio" name="board-size" id="size-6" value="6" class="size-radio hidden" checked><label for="size-6" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">6x6</label></div>
+            </div>
+            <h2 class="text-2xl mb-4">Game Mode</h2>
+            <button id="pvp-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg mb-4 transition-colors">Player vs Player</button>
+            <div class="mt-6"><h3 class="text-xl mb-4">Player vs CPU</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <button class="cpu-mode-button bg-green-600 hover:bg-green-700" data-difficulty="easy">Easy</button>
+                    <button class="cpu-mode-button bg-yellow-600 hover:bg-yellow-700" data-difficulty="medium">Medium</button>
+                    <button class="cpu-mode-button bg-red-600 hover:bg-red-700" data-difficulty="hard">Hard</button>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-8">
+                <button id="back-to-mode-select-button" class="text-indigo-300 hover:text-indigo-200">← 戻る</button>
+                <button id="menu-how-to-play-button" class="text-indigo-300 hover:text-indigo-200">遊び方</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-container" class="hidden w-full max-w-4xl mx-auto">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4 text-indigo-300">RayGame</h1>
+        <div id="info-panel" class="flex flex-col sm:flex-row justify-between items-center bg-gray-700/50 backdrop-blur-sm p-3 sm:p-4 rounded-lg mb-4 gap-3">
+            <div><h2 class="text-lg sm:text-xl">Turn: <span id="turn-counter" class="font-bold text-2xl">1</span></h2></div>
+            <div><h2 class="text-lg sm:text-xl">Player: <span id="current-player" class="font-bold text-2xl"></span></h2></div>
+            <div class="flex space-x-6 sm:space-x-8 text-center">
+                <div><h3 class="text-base sm:text-lg text-blue-400">Player A</h3><p id="score-a" class="text-xl sm:text-2xl font-bold">0</p></div>
+                <div><h3 class="text-base sm:text-lg text-red-400">Player B</h3><p id="score-b" class="text-xl sm:text-2xl font-bold">0</p></div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="surrender-button" class="text-red-400 hover:text-red-300 px-2">Surrender</button>
+                <button id="auto-finish-button" class="text-yellow-300 hover:text-yellow-200 px-2">Auto Finish</button>
+                <button id="game-how-to-play-button" class="text-indigo-300 hover:text-indigo-200 px-2">遊び方</button>
+                <button id="main-menu-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Menu</button>
+            </div>
+        </div>
+        <div id="board-wrapper" class="relative w-full max-w-[70vh] sm:max-w-xl mx-auto aspect-square">
+            <div id="game-over-screen" class="hidden absolute inset-0 bg-black/70 z-20 flex flex-col items-center justify-center rounded-lg text-center p-4">
+                <h2 id="game-over-title" class="text-4xl font-bold mb-2">Game Over</h2>
+                <p id="game-over-message" class="text-xl mb-6"></p>
+                <div class="flex space-x-4">
+                    <button id="restart-button" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg">Restart</button>
+                    <button id="game-over-menu-button" class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg">Main Menu</button>
+                </div>
+            </div>
+            <div id="ray-container" class="absolute inset-0 z-0"></div>
+            <div id="board" class="relative grid gap-1 bg-gray-900/80 p-1 sm:p-2 rounded-lg z-10 w-full h-full"></div>
+        </div>
+        <div id="message-area" class="text-center mt-4 h-8 text-yellow-300 font-semibold text-lg"></div>
+    </div>
+
+    <div id="source-tooltip" class="hidden absolute bg-gray-900/80 backdrop-blur-sm border border-gray-500 rounded-md p-2 text-sm z-50"></div>
+
+    <div id="direction-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div class="bg-gray-700 p-6 sm:p-8 rounded-lg shadow-xl text-center w-80">
+            <h3 class="text-2xl mb-6">Select Directions</h3>
+            <div class="grid grid-cols-3 grid-rows-3 gap-4 w-48 h-48 mx-auto mb-6 text-2xl">
+                <div class="col-start-2 row-start-1 flex items-center justify-center"><input type="checkbox" id="dir-n" data-dir="N" class="direction-checkbox hidden"><label for="dir-n" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">↑</label></div>
+                <div class="col-start-1 row-start-2 flex items-center justify-center"><input type="checkbox" id="dir-w" data-dir="W" class="direction-checkbox hidden"><label for="dir-w" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">←</label></div>
+                <div class="col-start-3 row-start-2 flex items-center justify-center"><input type="checkbox" id="dir-e" data-dir="E" class="direction-checkbox hidden"><label for="dir-e" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">→</label></div>
+                <div class="col-start-2 row-start-3 flex items-center justify-center"><input type="checkbox" id="dir-s" data-dir="S" class="direction-checkbox hidden"><label for="dir-s" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">↓</label></div>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button id="place-button" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors">Place</button>
+                <button id="cancel-button" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div class="bg-gray-700 p-6 sm:p-8 rounded-lg shadow-xl text-center w-80">
+            <p id="alert-message" class="text-lg mb-6 text-yellow-300"></p>
+            <button id="alert-ok-button" class="bg-indigo-600 hover:bg-indigo-700 px-8 py-2 rounded-lg transition-colors">OK</button>
+        </div>
+    </div>
+    
+    <div id="how-to-play-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-700 p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-y-auto text-gray-300">
+            <h2 class="text-2xl mb-4 text-indigo-300">遊び方</h2>
+            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ゲームの目的</h3>
+            <p>交互に「ソース」と呼ばれるコマを盤面に配置し、ゲーム終了時に自分の色のマスが相手より多ければ勝利です。</p>
+            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ゲームの流れ</h3>
+            <p>自分のターンになったら、空いているマスを一つ選び、「ソース」を配置します。</p>
+            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ソースとRay（光線）</h3>
+            <ul class="list-disc list-inside space-y-2">
+                <li>ソースを置くとき、上下左右の4方向から1〜4つの方向を選びます。</li>
+                <li>ソースは選んだ方向に盤面の端まで届く「Ray」を放ちます。</li>
+                <li>Rayが通過したマスは、そのプレイヤーの色に染まります。Rayが多く重なるほど、色は濃くなります。</li>
+                <li>相手のRayと重なったマスは、Rayの数が多い方の色になります。同数の場合はどちらの色にもなりません。</li>
+            </ul>
+            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ソースのライフと配置ルール</h3>
+            <ul class="list-disc list-inside space-y-2">
+                <li>ソースには「ライフ」があります。ライフは <code class="bg-gray-800 px-1 rounded">5 - 選んだ方向の数</code> で決まります。（例：2方向ならライフは3）</li>
+                <li>ソースを置けるのは、<code class="bg-gray-800 px-1 rounded">(相手のRay数) - (自分のRay数) < これから置くソースのライフ</code> という条件を満たすマスだけです。</li>
+            </ul>
+            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ソースの消滅（連鎖）</h3>
+            <ul class="list-disc list-inside space-y-2">
+                <li>ソースを置いた後、盤面にある全てのソースの場所で <code class="bg-gray-800 px-1 rounded">(相手のRay数) ≧ (そのソースのライフ)</code> になっていると、そのソースは消滅します。</li>
+                <li>ソースが消えるとRayの状況が変化し、それによって別のソースが消えることもあります（連鎖）。</li>
+            </ul>
+            <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">特殊ルール</h3>
+            <ul class="list-disc list-inside space-y-2">
+                <li><strong>初期ターン制限:</strong> 最初のターンだけは、2方向以上を選択する必要があります。（4x4では各プレイヤー1ターン目のみ、6x6では各2ターン目まで）</li>
+                <li><strong>ターン制限:</strong> 4x4では40ターン、6x6では90ターンが経過すると、その時点のマス数で勝敗が決まります。</li>
+                <li><strong>連続パス:</strong> 2ターン連続でパス（置けるマスがない）をすると、そのプレイヤーの負けになります。</li>
+                <li><strong>プレイ時間の目安:</strong> 4x4は約5～10分、6x6は約15～25分です。</li>
+            </ul>
+            <div class="text-right mt-6">
+                <button id="how-to-play-close-button" class="bg-indigo-600 hover:bg-indigo-700 px-8 py-2 rounded-lg transition-colors text-white">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const PLAYER_A = 'A', PLAYER_B = 'B';
+            const COLORS = { A: { ray: 'bg-blue-500/25' }, B: { ray: 'bg-red-500/25' } };
+            const DIR_MAP = { N: '↑', S: '↓', W: '←', E: '→' };
+
+            const playModeScreen = document.getElementById('play-mode-screen');
+            const gameSetupScreen = document.getElementById('game-setup-screen');
+            const localPlayButton = document.getElementById('local-play-button');
+            const onlinePlayButton = document.getElementById('online-play-button');
+            const gameContainer = document.getElementById('game-container');
+            const pvpButton = document.getElementById('pvp-button');
+            const cpuModeButtons = document.querySelectorAll('.cpu-mode-button');
+            const mainMenuButton = document.getElementById('main-menu-button');
+            const boardEl = document.getElementById('board');
+            const rayContainerEl = document.getElementById('ray-container');
+            const currentPlayerEl = document.getElementById('current-player');
+            const turnCounterEl = document.getElementById('turn-counter');
+            const scoreAEl = document.getElementById('score-a');
+            const scoreBEl = document.getElementById('score-b');
+            const messageAreaEl = document.getElementById('message-area');
+            const directionModal = document.getElementById('direction-modal');
+            const dirCheckboxes = document.querySelectorAll('.direction-checkbox');
+            const placeButton = document.getElementById('place-button');
+            const cancelButton = document.getElementById('cancel-button');
+            const sourceTooltipEl = document.getElementById('source-tooltip');
+            const alertModalEl = document.getElementById('alert-modal');
+            const alertMessageEl = document.getElementById('alert-message');
+            const alertOkButton = document.getElementById('alert-ok-button');
+            const gameOverScreen = document.getElementById('game-over-screen');
+            const gameOverTitle = document.getElementById('game-over-title');
+            const gameOverMessage = document.getElementById('game-over-message');
+            const restartButton = document.getElementById('restart-button');
+            const gameOverMenuButton = document.getElementById('game-over-menu-button');
+            const menuHowToPlayButton = document.getElementById('menu-how-to-play-button');
+            const gameHowToPlayButton = document.getElementById('game-how-to-play-button');
+            const howToPlayModal = document.getElementById('how-to-play-modal');
+            const howToPlayCloseButton = document.getElementById('how-to-play-close-button');
+            const autoFinishButton = document.getElementById('auto-finish-button');
+            const surrenderButton = document.getElementById('surrender-button');
+            const backToModeSelectButton = document.getElementById('back-to-mode-select-button');
+            
+            let state = {};
+            let lastTap = { r: -1, c: -1, time: 0 };
+
+            const goToMainMenu = () => {
+                gameContainer.classList.add('hidden');
+                gameSetupScreen.classList.add('hidden');
+                gameOverScreen.classList.add('hidden');
+                playModeScreen.classList.remove('hidden');
+            };
+
+            localPlayButton.addEventListener('click', () => {
+                playModeScreen.classList.add('hidden');
+                gameSetupScreen.classList.remove('hidden');
+            });
+            onlinePlayButton.addEventListener('click', () => {
+                showAlertModal('オンライン対戦は現在準備中です。');
+            });
+            backToModeSelectButton.addEventListener('click', () => {
+                gameSetupScreen.classList.add('hidden');
+                playModeScreen.classList.remove('hidden');
+            });
+
+            pvpButton.addEventListener('click', () => startGame('pvp'));
+            cpuModeButtons.forEach(b => b.addEventListener('click', () => startGame('pvc', b.dataset.difficulty)));
+            mainMenuButton.addEventListener('click', goToMainMenu);
+            gameOverMenuButton.addEventListener('click', goToMainMenu);
+            restartButton.addEventListener('click', () => {
+                gameOverScreen.classList.add('hidden');
+                init(state.gameMode, state.cpuDifficulty, state.boardSize);
+            });
+            
+            const showHowToPlay = () => howToPlayModal.classList.remove('hidden');
+            const hideHowToPlay = () => howToPlayModal.classList.add('hidden');
+            menuHowToPlayButton.addEventListener('click', showHowToPlay);
+            gameHowToPlayButton.addEventListener('click', showHowToPlay);
+            howToPlayCloseButton.addEventListener('click', hideHowToPlay);
+            autoFinishButton.addEventListener('click', autoFinishGame);
+            surrenderButton.addEventListener('click', handleSurrender);
+
+            function startGame(mode, difficulty = null) {
+                const boardSize = parseInt(document.querySelector('input[name="board-size"]:checked').value);
+                gameSetupScreen.classList.add('hidden');
+                gameContainer.classList.remove('hidden');
+                init(mode, difficulty, boardSize);
+            }
+
+            function init(mode, difficulty, boardSize) {
+                state = createInitialState(mode, difficulty, boardSize);
+                boardEl.style.gridTemplateColumns = `repeat(${state.boardSize}, minmax(0, 1fr))`;
+                render();
+                addEventListeners();
+                if (state.gameMode === 'pvc' && state.currentPlayer === state.cpuPlayer && !state.gameOver) {
+                    state.isCpuTurn = true;
+                    document.body.classList.add('cpu-thinking');
+                    setTimeout(cpuMove, 1000);
+                }
+            }
+
+            function createInitialState(mode, difficulty, boardSize) {
+                const board = Array.from({ length: boardSize }, () => Array.from({ length: boardSize }, () => ({ source: null, paramA: 0, paramB: 0, owner: null })));
+                let firstPlayer = Math.random() < 0.5 ? PLAYER_A : PLAYER_B;
+                let turnCountA = 0, turnCountB = 0;
+                const cpuPlayer = mode === 'pvc' ? (Math.random() < 0.5 ? PLAYER_A : PLAYER_B) : null;
+                
+                if (mode === 'pvc' && firstPlayer === cpuPlayer) {
+                    const move = findBestMove('hard', cpuPlayer, board, 0);
+                    if(move) {
+                        board[move.r][move.c].source = { owner: cpuPlayer, directions: move.directions, life: 5 - move.directions.length };
+                        calculateAllParameters(board);
+                        if (cpuPlayer === PLAYER_A) turnCountA = 1; else turnCountB = 1;
+                        firstPlayer = (cpuPlayer === PLAYER_A ? PLAYER_B : PLAYER_A);
+                    }
+                }
+
+                return {
+                    board, boardSize,
+                    currentPlayer: firstPlayer, turnCountA, turnCountB, gameOver: false, selectedCell: null,
+                    consecutivePassesA: 0, consecutivePassesB: 0,
+                    gameMode: mode, cpuDifficulty: difficulty,
+                    cpuPlayer,
+                    isCpuTurn: false,
+                    isAutoPlaying: false,
+                };
+            }
+
+            function addEventListeners() {
+                boardEl.onclick = handleCellClick;
+                boardEl.onmouseover = handleCellMouseOver;
+                boardEl.onmouseout = handleCellMouseOut;
+                document.onmousemove = handleMouseMove;
+                
+                boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });
+                document.addEventListener('touchstart', (e) => {
+                    if (!boardEl.contains(e.target)) {
+                        handleCellMouseOut();
+                    }
+                });
+
+                placeButton.onclick = handlePlaceButtonClick;
+                cancelButton.onclick = hideDirectionModal;
+                alertOkButton.onclick = hideAlertModal;
+                dirCheckboxes.forEach(cb => cb.onchange = () => { placeButton.disabled = ![...dirCheckboxes].some(c => c.checked); });
+            }
+            
+            function render() {
+                renderBoard();
+                renderRays();
+                renderInfo();
+            }
+
+            function renderBoard() {
+                boardEl.innerHTML = '';
+                state.board.forEach((row, r) => row.forEach((cell, c) => {
+                    const cellEl = document.createElement('div');
+                    cellEl.dataset.r = r; cellEl.dataset.c = c;
+                    let cellBg = 'bg-gray-700';
+                    const paramA = cell.paramA, paramB = cell.paramB;
+                    if (paramA > paramB) {
+                        const intensity = Math.min(paramA, 5);
+                        const opacity = 0.15 + (intensity * 0.1);
+                        cellBg = `bg-blue-600/[${opacity.toFixed(2)}]`;
+                    } else if (paramB > paramA) {
+                        const intensity = Math.min(paramB, 5);
+                        const opacity = 0.15 + (intensity * 0.1);
+                        cellBg = `bg-red-600/[${opacity.toFixed(2)}]`;
+                    } else if (paramA > 0) {
+                        cellBg = 'bg-gray-600';
+                    }
+                    cellEl.className = `cell flex items-center justify-center rounded-md ${cellBg}`;
+                    if (cell.source) {
+                        const sourceEl = document.createElement('div');
+                        const playerColor = cell.source.owner === PLAYER_A ? 'bg-blue-600' : 'bg-red-600';
+                        const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
+                        const effectiveLife = cell.source.life - oppParam;
+                        const lifeColor = effectiveLife <= 0 ? 'text-red-400' : 'text-white';
+                        sourceEl.className = `source w-3/4 h-3/4 rounded-full flex items-center justify-center font-bold text-lg shadow-lg ${playerColor}`;
+                        sourceEl.innerHTML = `<span class="${lifeColor}">${effectiveLife}</span>`;
+                        cellEl.appendChild(sourceEl);
+                    }
+                    boardEl.appendChild(cellEl);
+                }));
+            }
+
+            function renderRays() {
+                rayContainerEl.innerHTML = '';
+                const boardRect = boardEl.getBoundingClientRect();
+                if (boardRect.width === 0) return;
+                const cellWidth = boardRect.width / state.boardSize;
+                state.board.forEach((row, r) => row.forEach((cell, c) => {
+                    if (cell.source) {
+                        const color = COLORS[cell.source.owner].ray;
+                        if (cell.source.directions.includes('N')) createRayEl(c, 0, 1, r, color);
+                        if (cell.source.directions.includes('S')) createRayEl(c, r + 1, 1, state.boardSize - (r + 1), color);
+                        if (cell.source.directions.includes('W')) createRayEl(0, r, c, 1, color);
+                        if (cell.source.directions.includes('E')) createRayEl(c + 1, r, state.boardSize - (c + 1), 1, color);
+                    }
+                }));
+                function createRayEl(x, y, w, h, color) {
+                    if (w <= 0 || h <= 0) return;
+                    const rayEl = document.createElement('div');
+                    rayEl.className = `absolute ${color} rounded-sm`;
+                    rayEl.style.left = `${x * cellWidth}px`; rayEl.style.top = `${y * cellWidth}px`;
+                    rayEl.style.width = `${w * cellWidth}px`; rayEl.style.height = `${h * cellWidth}px`;
+                    rayContainerEl.appendChild(rayEl);
+                }
+            }
+
+            function renderInfo() {
+                const totalTurns = state.turnCountA + state.turnCountB;
+                const maxTurns = state.boardSize === 4 ? 40 : 90;
+                let playerText = state.currentPlayer;
+                if (state.gameMode === 'pvc') {
+                    const playerType = state.currentPlayer === state.cpuPlayer ? `CPU - ${state.cpuDifficulty.charAt(0).toUpperCase() + state.cpuDifficulty.slice(1)}` : 'You';
+                    playerText = `${state.currentPlayer} (${playerType})`;
+                }
+                currentPlayerEl.textContent = playerText;
+                currentPlayerEl.className = `font-bold text-2xl ${state.currentPlayer === PLAYER_A ? 'text-blue-400' : 'text-red-400'}`;
+                turnCounterEl.textContent = `${totalTurns + 1} / ${maxTurns}`;
+                const scores = calculateScores();
+                scoreAEl.textContent = scores.A; scoreBEl.textContent = scores.B;
+            }
+
+            function calculateAllParameters(board) {
+                const size = board.length;
+                for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) { board[r][c].paramA = 0; board[r][c].paramB = 0; }
+                for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+                    const { source } = board[r][c];
+                    if (source) {
+                        const param = source.owner === PLAYER_A ? 'paramA' : 'paramB';
+                        if (source.directions.includes('N')) for (let i = r - 1; i >= 0; i--) board[i][c][param]++;
+                        if (source.directions.includes('S')) for (let i = r + 1; i < size; i++) board[i][c][param]++;
+                        if (source.directions.includes('W')) for (let j = c - 1; j >= 0; j--) board[r][j][param]++;
+                        if (source.directions.includes('E')) for (let j = c + 1; j < size; j++) board[r][j][param]++;
+                    }
+                }
+                for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+                    const cell = board[r][c];
+                    if (cell.paramA > cell.paramB) cell.owner = PLAYER_A;
+                    else if (cell.paramB > cell.paramA) cell.owner = PLAYER_B;
+                    else cell.owner = null;
+                }
+            }
+
+            function calculateScores() { return state.board.flat().reduce((acc, cell) => { if (cell.owner) acc[cell.owner]++; return acc; }, { A: 0, B: 0 }); }
+
+            async function handlePlaceButtonClick() {
+                if (!state.selectedCell) return;
+                const { r, c } = state.selectedCell;
+                const directions = [...dirCheckboxes].filter(cb => cb.checked).map(cb => cb.dataset.dir);
+                const placed = await placeSource(r, c, directions);
+                if (placed) {
+                    endTurn();
+                }
+            }
+
+            function handleCellClick(e) {
+                if (state.gameOver || state.isCpuTurn || state.isAutoPlaying) return;
+                const cellEl = e.target.closest('.cell');
+                if (!cellEl) return;
+                const r = parseInt(cellEl.dataset.r), c = parseInt(cellEl.dataset.c);
+                if (state.board[r][c].source) return;
+                const turnCount = state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB;
+                if (!isPlaceable(r, c, state.currentPlayer, turnCount)) {
+                    showAlertModal("このマスには配置できる方向がありません。");
+                    return;
+                }
+                state.selectedCell = { r, c };
+                showDirectionModal();
+            }
+            
+            function isPlaceable(r, c, player, turnCount) {
+                const earlyTurnLimit = state.boardSize === 4 ? 1 : 2;
+                const isEarly = turnCount < earlyTurnLimit;
+                const cell = state.board[r][c];
+                const myP = player === PLAYER_A ? cell.paramA : cell.paramB;
+                const opP = player === PLAYER_A ? cell.paramB : cell.paramA;
+                for (let i = 1; i < 16; i++) {
+                    const d = (i & 1) + ((i >> 1) & 1) + ((i >> 2) & 1) + ((i >> 3) & 1);
+                    if (d === 0) continue;
+                    if (isEarly && d < 2) continue;
+                    if (opP - myP < (5 - d)) return true;
+                }
+                return false;
+            }
+
+            async function placeSource(r, c, directions) {
+                const d = directions.length; if (d === 0) return false;
+                const L = 5 - d;
+                const earlyTurnLimit = state.boardSize === 4 ? 1 : 2;
+                const turnCount = state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB;
+                const isEarly = turnCount < earlyTurnLimit;
+                if (isEarly && d < 2) {
+                    if (!state.isAutoPlaying) {
+                        hideDirectionModal(); showAlertModal(`最初の${earlyTurnLimit}ターンは、2方向以上を選択してください。`);
+                    }
+                    return false;
+                }
+                const cell = state.board[r][c];
+                const myParam = state.currentPlayer === PLAYER_A ? cell.paramA : cell.paramB;
+                const oppParam = state.currentPlayer === PLAYER_A ? cell.paramB : cell.paramA;
+                if (oppParam - myParam >= L) {
+                    if (!state.isAutoPlaying) {
+                        hideDirectionModal(); showAlertModal("このマスには配置できません。(相手パラメータ - 自分パラメータ < ライフ) を満たしません。");
+                    }
+                    return false;
+                }
+                hideDirectionModal();
+                if (state.currentPlayer === PLAYER_A) state.consecutivePassesA = 0; else state.consecutivePassesB = 0;
+                state.board[r][c].source = { owner: state.currentPlayer, directions, life: L };
+                if (state.currentPlayer === PLAYER_A) state.turnCountA++; else state.turnCountB++;
+                await runChainReaction();
+                return true;
+            }
+
+            async function runChainReaction() {
+                let sourcesRemoved;
+                do {
+                    calculateAllParameters(state.board);
+                    render();
+                    await sleep(state.isAutoPlaying ? 50 : 300);
+                    const toRemove = [];
+                    for (let r = 0; r < state.boardSize; r++) for (let c = 0; c < state.boardSize; c++) {
+                        const cell = state.board[r][c];
+                        if (cell.source) {
+                            const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
+                            if (oppParam >= cell.source.life) toRemove.push({ r, c });
+                        }
+                    }
+                    if (toRemove.length > 0) {
+                        sourcesRemoved = true;
+                        toRemove.forEach(({ r, c }) => { state.board[r][c].source = null; });
+                    } else { sourcesRemoved = false; }
+                } while (sourcesRemoved);
+            }
+
+            function endTurn() {
+                if (state.gameOver) return;
+                state.currentPlayer = state.currentPlayer === PLAYER_A ? PLAYER_B : PLAYER_A;
+                renderInfo();
+                const canAMove = hasLegalMoves(PLAYER_A, state.board, state.turnCountA);
+                const canBMove = hasLegalMoves(PLAYER_B, state.board, state.turnCountB);
+                const totalTurns = state.turnCountA + state.turnCountB;
+                const maxTurns = state.boardSize === 4 ? 40 : 90;
+                
+                if ((!canAMove && !canBMove) || totalTurns >= maxTurns) {
+                    showGameOverScreen(totalTurns >= maxTurns ? `(Turn limit reached)` : ``);
+                    return;
+                }
+                
+                const currentPlayerCanMove = (state.currentPlayer === PLAYER_A) ? canAMove : canBMove;
+
+                if (!currentPlayerCanMove) {
+                    if (state.currentPlayer === PLAYER_A) {
+                        state.consecutivePassesA++;
+                        if (state.consecutivePassesA >= 2) {
+                            showGameOverScreen(`(Player A passed twice)`, PLAYER_B);
+                            return;
+                        }
+                    } else {
+                        state.consecutivePassesB++;
+                        if (state.consecutivePassesB >= 2) {
+                            showGameOverScreen(`(Player B passed twice)`, PLAYER_A);
+                            return;
+                        }
+                    }
+                    if (!state.isAutoPlaying) showMessage(`プレイヤー ${state.currentPlayer} はパスします。`);
+                    setTimeout(endTurn, state.isAutoPlaying ? 50 : 1500);
+                    return;
+                }
+
+                if (state.gameMode === 'pvc' && state.currentPlayer === state.cpuPlayer && !state.isAutoPlaying) {
+                    state.isCpuTurn = true;
+                    document.body.classList.add('cpu-thinking');
+                    setTimeout(cpuMove, 1200);
+                }
+            }
+
+            function showGameOverScreen(reason, forcedWinner = null) {
+                state.gameOver = true;
+                const scores = calculateScores();
+                let winnerMsg;
+
+                if (forcedWinner) {
+                    winnerMsg = `Player ${forcedWinner} Wins!`;
+                    gameOverTitle.className = `text-4xl font-bold mb-2 ${forcedWinner === PLAYER_A ? 'text-blue-400' : 'text-red-400'}`;
+                } else {
+                    if (scores.A > scores.B) { winnerMsg = "Player A Wins!"; gameOverTitle.className = "text-4xl font-bold mb-2 text-blue-400"; }
+                    else if (scores.B > scores.A) { winnerMsg = "Player B Wins!"; gameOverTitle.className = "text-4xl font-bold mb-2 text-red-400"; }
+                    else { winnerMsg = "It's a Draw!"; gameOverTitle.className = "text-4xl font-bold mb-2 text-yellow-300"; }
+                }
+                
+                gameOverTitle.textContent = winnerMsg;
+                gameOverMessage.textContent = `Final Score: Player A ${scores.A} - ${scores.B} Player B ${reason}`;
+                gameOverScreen.classList.remove('hidden');
+            }
+
+            function handleSurrender() {
+                if (state.gameOver) return;
+                const winner = state.currentPlayer === PLAYER_A ? PLAYER_B : PLAYER_A;
+                showGameOverScreen(`(Player ${state.currentPlayer} surrendered)`, winner);
+            }
+
+            function hasLegalMoves(player, board, turnCount) {
+                for (let r = 0; r < board.length; r++) for (let c = 0; c < board.length; c++) {
+                    if (!board[r][c].source && isPlaceable(r, c, player, turnCount)) return true;
+                }
+                return false;
+            }
+
+            async function cpuMove() {
+                const bestMove = findBestMove(state.cpuDifficulty, state.currentPlayer, state.board, state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB);
+                if (bestMove) {
+                    await placeSource(bestMove.r, bestMove.c, bestMove.directions);
+                }
+                state.isCpuTurn = false;
+                document.body.classList.remove('cpu-thinking');
+                endTurn();
+            }
+            
+            async function autoFinishGame() {
+                state.isAutoPlaying = true;
+                autoFinishButton.disabled = true;
+                surrenderButton.disabled = true;
+                document.body.classList.add('auto-playing');
+                while(!state.gameOver) {
+                    const turnCount = state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB;
+                    if (!hasLegalMoves(state.currentPlayer, state.board, turnCount)) {
+                        endTurn();
+                        await sleep(50);
+                        continue;
+                    }
+                    const difficulty = 'hard';
+                    const bestMove = findBestMove(difficulty, state.currentPlayer, state.board, turnCount);
+                    if (bestMove) {
+                        const placed = await placeSource(bestMove.r, bestMove.c, bestMove.directions);
+                        if (!placed) { state.gameOver = true; break; }
+                        endTurn();
+                    } else {
+                        endTurn();
+                    }
+                    await sleep(50);
+                }
+                state.isAutoPlaying = false;
+                autoFinishButton.disabled = false;
+                surrenderButton.disabled = false;
+                document.body.classList.remove('auto-playing');
+            }
+
+            function findBestMove(difficulty, player, board, turnCount) {
+                const legalMoves = getAllLegalMoves(player, board, turnCount);
+                if (legalMoves.length === 0) return null;
+                if (difficulty === 'easy') return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+                let bestScore = -Infinity, bestMoves = [];
+                for (const move of legalMoves) {
+                    const score = evaluateMove(move, player, board, difficulty);
+                    if (score > bestScore) { bestScore = score; bestMoves = [move]; }
+                    else if (score === bestScore) { bestMoves.push(move); }
+                }
+                return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            }
+            
+            function evaluateMove(move, player, board, difficulty) {
+                const tempBoard = JSON.parse(JSON.stringify(board));
+                const {r, c, directions} = move;
+                const oppPlayer = player === PLAYER_A ? PLAYER_B : PLAYER_A;
+                const oppSourcesBefore = tempBoard.flat().filter(cell => cell.source && cell.source.owner === oppPlayer).length;
+                
+                const cellBeforeMove = tempBoard[r][c];
+                const oppParamBefore = player === PLAYER_A ? cellBeforeMove.paramB : cellBeforeMove.paramA;
+
+                tempBoard[r][c].source = { owner: player, directions, life: 5 - directions.length };
+                
+                calculateAllParameters(tempBoard);
+                let sourcesRemoved;
+                do {
+                    sourcesRemoved = false;
+                    const toRemove = [];
+                    for (let r_ = 0; r_ < tempBoard.length; r_++) for (let c_ = 0; c_ < tempBoard.length; c_++) {
+                        const cell = tempBoard[r_][c_];
+                        if (cell.source) {
+                            const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
+                            if (oppParam >= cell.source.life) toRemove.push({r: r_, c: c_});
+                        }
+                    }
+                    if (toRemove.length > 0) {
+                        sourcesRemoved = true;
+                        toRemove.forEach(pos => { tempBoard[pos.r][pos.c].source = null; });
+                        calculateAllParameters(tempBoard);
+                    }
+                } while (sourcesRemoved);
+                
+                const scores = tempBoard.flat().reduce((acc, cell) => { if (cell.owner) acc[cell.owner]++; return acc; }, { A: 0, B: 0 });
+                const myScore = scores[player];
+                const oppScore = scores[oppPlayer];
+                let score = myScore - oppScore;
+
+                if (difficulty === 'hard') {
+                    const mySources = tempBoard.flat().filter(c => c.source && c.source.owner === player).length;
+                    const oppSourcesAfter = tempBoard.flat().filter(c => c.source && c.source.owner === oppPlayer).length;
+                    score += (oppSourcesBefore - oppSourcesAfter) * 10;
+                    score += (mySources - oppSourcesAfter) * 3;
+                    const effectiveLife = (5 - directions.length) - oppParamBefore;
+                    score += effectiveLife * 2;
+                    const distanceFromCenter = Math.abs(r - (board.length - 1) / 2) + Math.abs(c - (board.length - 1) / 2);
+                    score -= distanceFromCenter * 0.5;
+                }
+                return score;
+            }
+
+            function getAllLegalMoves(player, board, turnCount) {
+                const moves = [];
+                const earlyTurnLimit = board.length === 4 ? 1 : 2;
+                const isEarly = turnCount < earlyTurnLimit;
+                const directionsList = [];
+                for (let i = 1; i < 16; i++) {
+                    const d = [];
+                    if (i & 1) d.push('N'); if (i & 2) d.push('E'); if (i & 4) d.push('S'); if (i & 8) d.push('W');
+                    if (d.length > 0) directionsList.push(d);
+                }
+                for (let r = 0; r < board.length; r++) for (let c = 0; c < board.length; c++) {
+                    if (!board[r][c].source) {
+                        const cell = board[r][c];
+                        const myP = player === PLAYER_A ? cell.paramA : cell.paramB;
+                        const opP = player === PLAYER_A ? cell.paramB : cell.paramA;
+                        for (const dirs of directionsList) {
+                            if (isEarly && dirs.length < 2) continue;
+                            if (opP - myP < (5 - dirs.length)) moves.push({ r, c, directions: dirs });
+                        }
+                    }
+                }
+                return moves;
+            }
+
+            function showDirectionModal() { dirCheckboxes.forEach(cb => cb.checked = false); placeButton.disabled = true; directionModal.classList.remove('hidden'); }
+            function hideDirectionModal() { state.selectedCell = null; directionModal.classList.add('hidden'); }
+            function showAlertModal(msg) { alertMessageEl.textContent = msg; alertModalEl.classList.remove('hidden'); }
+            function hideAlertModal() { alertModalEl.classList.add('hidden'); }
+            let messageTimeout;
+            function showMessage(msg) { clearTimeout(messageTimeout); messageAreaEl.textContent = msg; messageTimeout = setTimeout(() => messageAreaEl.textContent = '', 4000); }
+            
+            function handleCellTouchStart(e) {
+                if (state.gameOver || state.isCpuTurn || state.isAutoPlaying) return;
+                const cellEl = e.target.closest('.cell');
+                if (!cellEl) return;
+                
+                e.preventDefault();
+
+                const r = parseInt(cellEl.dataset.r);
+                const c = parseInt(cellEl.dataset.c);
+                const now = new Date().getTime();
+                const timeSince = now - lastTap.time;
+
+                if (timeSince < 300 && timeSince > 0 && lastTap.r === r && lastTap.c === c) {
+                    lastTap = { r: -1, c: -1, time: 0 };
+                    handleCellMouseOut();
+                    
+                    if (state.board[r][c].source) return;
+                    const turnCount = state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB;
+                    if (!isPlaceable(r, c, state.currentPlayer, turnCount)) {
+                        showAlertModal("このマスには配置できる方向がありません。");
+                        return;
+                    }
+                    state.selectedCell = { r, c };
+                    showDirectionModal();
+                } else {
+                    lastTap = { r, c, time: now };
+                    
+                    const cell = state.board[r][c];
+                    let tooltipContent = '';
+                    if (cell.source) {
+                        const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
+                        const effectiveLife = cell.source.life - oppParam;
+                        tooltipContent = `<strong>Player:</strong> ${cell.source.owner}<br><strong>Base Life:</strong> ${cell.source.life}<br><strong>Opponent Rays:</strong> ${oppParam}<br><strong>Effective Life:</strong> ${effectiveLife}<br><strong>Directions:</strong> ${cell.source.directions.map(d => DIR_MAP[d]).join(', ')}`;
+                    } else if (cell.paramA > 0 || cell.paramB > 0) {
+                        tooltipContent = `<strong class="text-blue-400">A-Rays: ${cell.paramA}</strong><br><strong class="text-red-400">B-Rays: ${cell.paramB}</strong>`;
+                    }
+                    
+                    if (tooltipContent) {
+                        sourceTooltipEl.innerHTML = tooltipContent;
+                        sourceTooltipEl.classList.remove('hidden');
+                        const touch = e.touches[0];
+                        sourceTooltipEl.style.left = `${touch.pageX + 15}px`;
+                        sourceTooltipEl.style.top = `${touch.pageY + 15}px`;
+                    } else {
+                        handleCellMouseOut();
+                    }
+                }
+            }
+
+            function handleCellMouseOver(e) {
+                const cellEl = e.target.closest('.cell'); if (!cellEl) return;
+                const r = parseInt(cellEl.dataset.r), c = parseInt(cellEl.dataset.c);
+                const cell = state.board[r][c];
+                if (cell.source) {
+                    const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
+                    const effectiveLife = cell.source.life - oppParam;
+                    sourceTooltipEl.innerHTML = `<strong>Player:</strong> ${cell.source.owner}<br><strong>Base Life:</strong> ${cell.source.life}<br><strong>Opponent Rays:</strong> ${oppParam}<br><strong>Effective Life:</strong> ${effectiveLife}<br><strong>Directions:</strong> ${cell.source.directions.map(d => DIR_MAP[d]).join(', ')}`;
+                    sourceTooltipEl.classList.remove('hidden');
+                } else if (cell.paramA > 0 || cell.paramB > 0) {
+                    sourceTooltipEl.innerHTML = `<strong class="text-blue-400">A-Rays: ${cell.paramA}</strong><br><strong class="text-red-400">B-Rays: ${cell.paramB}</strong>`;
+                    sourceTooltipEl.classList.remove('hidden');
+                }
+            }
+            function handleCellMouseOut() { sourceTooltipEl.classList.add('hidden'); }
+            function handleMouseMove(e) { if (!sourceTooltipEl.classList.contains('hidden')) { sourceTooltipEl.style.left = `${e.pageX + 15}px`; sourceTooltipEl.style.top = `${e.pageY + 15}px`; } }
+            function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+        });
+    </script>
+</body>
+</html>
