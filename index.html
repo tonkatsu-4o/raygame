@@ -456,8 +456,9 @@
                     if (cell.source) {
                         const sourceEl = document.createElement('div');
                         const playerColor = cell.source.owner === PLAYER_A ? 'bg-blue-600' : 'bg-red-600';
+                        const myParam = cell.source.owner === PLAYER_A ? cell.paramA : cell.paramB;
                         const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
-                        const effectiveLife = cell.source.life - oppParam;
+                        const effectiveLife = cell.source.life - Math.max(0, oppParam - myParam);
                         const lifeColor = effectiveLife <= 0 ? 'text-red-400' : 'text-white';
                         sourceEl.className = `source w-3/4 h-3/4 rounded-full flex items-center justify-center font-bold text-lg shadow-lg ${playerColor}`;
                         sourceEl.innerHTML = `<span class="${lifeColor}">${effectiveLife}</span>`;
@@ -647,8 +648,9 @@
                     for (let r = 0; r < state.boardSize; r++) for (let c = 0; c < state.boardSize; c++) {
                         const cell = state.board[r][c];
                         if (cell.source) {
+                            const myParam = cell.source.owner === PLAYER_A ? cell.paramA : cell.paramB;
                             const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
-                            if (oppParam >= cell.source.life) toRemove.push({ r, c });
+                            if (oppParam - myParam >= cell.source.life) toRemove.push({ r, c });
                         }
                     }
                     if (toRemove.length > 0) {
@@ -803,8 +805,9 @@
                     for (let r_ = 0; r_ < tempBoard.length; r_++) for (let c_ = 0; c_ < tempBoard.length; c_++) {
                         const cell = tempBoard[r_][c_];
                         if (cell.source) {
+                            const myParam = cell.source.owner === PLAYER_A ? cell.paramA : cell.paramB;
                             const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
-                            if (oppParam >= cell.source.life) toRemove.push({r: r_, c: c_});
+                            if (oppParam - myParam >= cell.source.life) toRemove.push({r: r_, c: c_});
                         }
                     }
                     if (toRemove.length > 0) {
@@ -911,9 +914,10 @@
                     const cell = state.board[r][c];
                     let tooltipContent = '';
                     if (cell.source) {
+                        const myParam = cell.source.owner === PLAYER_A ? cell.paramA : cell.paramB;
                         const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
-                        const effectiveLife = cell.source.life - oppParam;
-                        tooltipContent = `<strong>Player:</strong> ${cell.source.owner}<br><strong>Base Life:</strong> ${cell.source.life}<br><strong>Opponent Rays:</strong> ${oppParam}<br><strong>Effective Life:</strong> ${effectiveLife}<br><strong>Directions:</strong> ${cell.source.directions.map(d => DIR_MAP[d]).join(', ')}`;
+                        const effectiveLife = cell.source.life - Math.max(0, oppParam - myParam);
+                        tooltipContent = `<strong>Player:</strong> ${cell.source.owner}<br><strong>Base Life:</strong> ${cell.source.life}<br><strong>Own Rays:</strong> ${myParam}<br><strong>Opponent Rays:</strong> ${oppParam}<br><strong>Effective Life:</strong> ${effectiveLife}<br><strong>Directions:</strong> ${cell.source.directions.map(d => DIR_MAP[d]).join(', ')}`;
                     } else if (cell.paramA > 0 || cell.paramB > 0) {
                         tooltipContent = `<strong class="text-blue-400">A-Rays: ${cell.paramA}</strong><br><strong class="text-red-400">B-Rays: ${cell.paramB}</strong>`;
                     }
@@ -965,9 +969,10 @@
                 const r = parseInt(cellEl.dataset.r), c = parseInt(cellEl.dataset.c);
                 const cell = state.board[r][c];
                 if (cell.source) {
+                    const myParam = cell.source.owner === PLAYER_A ? cell.paramA : cell.paramB;
                     const oppParam = cell.source.owner === PLAYER_A ? cell.paramB : cell.paramA;
-                    const effectiveLife = cell.source.life - oppParam;
-                    sourceTooltipEl.innerHTML = `<strong>Player:</strong> ${cell.source.owner}<br><strong>Base Life:</strong> ${cell.source.life}<br><strong>Opponent Rays:</strong> ${oppParam}<br><strong>Effective Life:</strong> ${effectiveLife}<br><strong>Directions:</strong> ${cell.source.directions.map(d => DIR_MAP[d]).join(', ')}`;
+                    const effectiveLife = cell.source.life - Math.max(0, oppParam - myParam);
+                    sourceTooltipEl.innerHTML = `<strong>Player:</strong> ${cell.source.owner}<br><strong>Base Life:</strong> ${cell.source.life}<br><strong>Own Rays:</strong> ${myParam}<br><strong>Opponent Rays:</strong> ${oppParam}<br><strong>Effective Life:</strong> ${effectiveLife}<br><strong>Directions:</strong> ${cell.source.directions.map(d => DIR_MAP[d]).join(', ')}`;
                     sourceTooltipEl.classList.remove('hidden');
                 } else if (cell.paramA > 0 || cell.paramB > 0) {
                     sourceTooltipEl.innerHTML = `<strong class="text-blue-400">A-Rays: ${cell.paramA}</strong><br><strong class="text-red-400">B-Rays: ${cell.paramB}</strong>`;
