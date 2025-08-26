@@ -158,6 +158,7 @@
             <div class="grid grid-cols-3 grid-rows-3 gap-4 w-48 h-48 mx-auto mb-6 text-2xl">
                 <div class="col-start-2 row-start-1 flex items-center justify-center"><input type="checkbox" id="dir-n" data-dir="N" class="direction-checkbox hidden"><label for="dir-n" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">↑</label></div>
                 <div class="col-start-1 row-start-2 flex items-center justify-center"><input type="checkbox" id="dir-w" data-dir="W" class="direction-checkbox hidden"><label for="dir-w" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">←</label></div>
+                <div class="col-start-2 row-start-2 flex items-center justify-center text-5xl font-bold text-gray-400" id="modal-life-display"></div>
                 <div class="col-start-3 row-start-2 flex items-center justify-center"><input type="checkbox" id="dir-e" data-dir="E" class="direction-checkbox hidden"><label for="dir-e" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">→</label></div>
                 <div class="col-start-2 row-start-3 flex items-center justify-center"><input type="checkbox" id="dir-s" data-dir="S" class="direction-checkbox hidden"><label for="dir-s" class="direction-label border-2 border-gray-500 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition-colors">↓</label></div>
             </div>
@@ -281,6 +282,7 @@
             const onlineOptions = document.getElementById('online-options');
             const onlinePlayStartButton = document.getElementById('online-play-start-button');
             const lifeCycleDisplay = document.getElementById('life-cycle-display');
+            const modalLifeDisplay = document.getElementById('modal-life-display');
             
             let state = {};
             let longPressTimer = null;
@@ -423,7 +425,7 @@
 
                 placeButton.onclick = handlePlaceButtonClick;
                 cancelButton.onclick = hideDirectionModal;
-                dirCheckboxes.forEach(cb => cb.onchange = () => { placeButton.disabled = ![...dirCheckboxes].some(c => c.checked); });
+                dirCheckboxes.forEach(cb => cb.onchange = updateModalLifeDisplay);
             }
             
             function render() {
@@ -509,7 +511,7 @@
                 for (let i = 1; i <= 4; i++) {
                     const lifeEl = document.createElement('span');
                     const isUsed = usedLives.includes(i);
-                    lifeEl.textContent = `L${i}`;
+                    lifeEl.textContent = i;
                     lifeEl.className = `life-indicator border-${playerColor}-400 ${isUsed ? 'life-used' : `life-available bg-${playerColor}-600`}`;
                     lifeCycleDisplay.appendChild(lifeEl);
                 }
@@ -871,6 +873,7 @@
                 if (c === 0) document.getElementById('dir-w').disabled = true;
                 if (c === size - 1) document.getElementById('dir-e').disabled = true;
 
+                updateModalLifeDisplay();
                 placeButton.disabled = true;
                 directionModal.classList.remove('hidden');
             }
@@ -880,6 +883,16 @@
             let messageTimeout;
             function showMessage(msg) { clearTimeout(messageTimeout); messageAreaEl.textContent = msg; messageTimeout = setTimeout(() => messageAreaEl.textContent = '', 4000); }
             
+            function updateModalLifeDisplay() {
+                const checkedCount = [...dirCheckboxes].filter(c => c.checked).length;
+                if (checkedCount > 0) {
+                    modalLifeDisplay.textContent = 5 - checkedCount;
+                } else {
+                    modalLifeDisplay.textContent = '';
+                }
+                placeButton.disabled = checkedCount === 0;
+            }
+
             function handleCellTouchStart(e) {
                 if (state.gameOver || state.isCpuTurn || state.isAutoPlaying) return;
                 const cellEl = e.target.closest('.cell');
