@@ -388,12 +388,24 @@
                 let turnCountA = 0, turnCountB = 0;
                 const cpuPlayer = mode === 'pvc' ? (Math.random() < 0.5 ? PLAYER_A : PLAYER_B) : null;
                 
+                let usedLivesA = [], usedLivesB = [];
+                let cycleTurnA = 0, cycleTurnB = 0;
+
                 if (mode === 'pvc' && firstPlayer === cpuPlayer) {
-                    const move = findBestMove('hard', cpuPlayer, board, 0);
+                    const move = findBestMove('hard', cpuPlayer, board, 0, []);
                     if(move) {
-                        board[move.r][move.c].source = { owner: cpuPlayer, directions: move.directions, life: 5 - move.directions.length };
+                        const life = 5 - move.directions.length;
+                        board[move.r][move.c].source = { owner: cpuPlayer, directions: move.directions, life: life };
                         calculateAllParameters(board);
-                        if (cpuPlayer === PLAYER_A) turnCountA = 1; else turnCountB = 1;
+                        if (cpuPlayer === PLAYER_A) {
+                            turnCountA = 1;
+                            usedLivesA.push(life);
+                            cycleTurnA = 1;
+                        } else {
+                            turnCountB = 1;
+                            usedLivesB.push(life);
+                            cycleTurnB = 1;
+                        }
                         firstPlayer = (cpuPlayer === PLAYER_A ? PLAYER_B : PLAYER_A);
                     }
                 }
@@ -401,7 +413,7 @@
                 return {
                     board, boardSize,
                     currentPlayer: firstPlayer, turnCountA, turnCountB, gameOver: false, selectedCell: null,
-                    cycleTurnA: 0, cycleTurnB: 0, usedLivesA: [], usedLivesB: [],
+                    cycleTurnA, cycleTurnB, usedLivesA, usedLivesB,
                     consecutivePassesA: 0, consecutivePassesB: 0,
                     gameMode: mode, cpuDifficulty: difficulty,
                     cpuPlayer,
@@ -841,7 +853,7 @@
                 const moves = [];
                 const earlyTurnLimit = board.length === 4 ? 1 : 2;
                 const isEarly = turnCount < earlyTurnLimit;
-                const usedLives = player === PLAYER_A ? state.usedLivesA : state.usedLivesB;
+                const usedLives = state ? (player === PLAYER_A ? state.usedLivesA : state.usedLivesB) : [];
                 const directionsList = [];
                 for (let i = 1; i < 16; i++) {
                     const d = [];
