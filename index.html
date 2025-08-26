@@ -13,12 +13,32 @@
         .direction-checkbox:checked + .direction-label, .size-radio:checked + .size-label {
             background-color: #4f46e5; border-color: #a5b4fc; color: white;
         }
+        .direction-checkbox:disabled + .direction-label {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background-color: #374151; /* gray-700 */
+            border-color: #4b5563; /* gray-600 */
+        }
         .cell { aspect-ratio: 1 / 1; transition: background-color 0.3s ease-in-out; }
         .source { transition: all 0.3s ease; animation: place-anim 0.3s ease-out; }
         @keyframes place-anim { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         #source-tooltip { pointer-events: none; }
         .cpu-thinking, .auto-playing { cursor: wait; }
         #board-wrapper { touch-action: manipulation; } /* スマホでのダブルタップズームを無効化 */
+        .life-indicator {
+            transition: all 0.3s ease;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            border: 2px solid;
+        }
+        .life-available {
+            opacity: 1;
+        }
+        .life-used {
+            opacity: 0.3;
+            background-color: #4b5563; /* gray-600 */
+        }
     </style>
 </head>
 <body class="bg-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-2 sm:p-4">
@@ -100,7 +120,10 @@
         <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4 text-indigo-300">RayGame</h1>
         <div id="info-panel" class="flex flex-col sm:flex-row justify-between items-center bg-gray-700/50 backdrop-blur-sm p-3 sm:p-4 rounded-lg mb-4 gap-3">
             <div><h2 class="text-lg sm:text-xl">Turn: <span id="turn-counter" class="font-bold text-2xl">1</span></h2></div>
-            <div><h2 class="text-lg sm:text-xl">Player: <span id="current-player" class="font-bold text-2xl"></span></h2></div>
+            <div class="text-center">
+                <h2 class="text-lg sm:text-xl">Player: <span id="current-player" class="font-bold text-2xl"></span></h2>
+                <div id="life-cycle-display" class="flex justify-center items-center space-x-2 mt-1"></div>
+            </div>
             <div class="flex space-x-6 sm:space-x-8 text-center">
                 <div><h3 class="text-base sm:text-lg text-blue-400">Player A</h3><p id="score-a" class="text-xl sm:text-2xl font-bold">0</p></div>
                 <div><h3 class="text-base sm:text-lg text-red-400">Player B</h3><p id="score-b" class="text-xl sm:text-2xl font-bold">0</p></div>
@@ -156,7 +179,7 @@
         <div class="bg-gray-700 p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-y-auto text-gray-300">
             <h2 class="text-2xl mb-4 text-indigo-300">遊び方</h2>
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ゲームの目的</h3>
-            <p>交互に「ソース」と呼ばれるコマを盤面に配置し、ゲーム終了時に自分の色のマスが相手より多ければ勝利です。</p>
+            <p>交互に「ソース」と呼ばれるコマを盤面に配置し、ゲーム終了時に自分の色のマスが相手より多ければ勝利です。プレイ時間の目安は、4x4で約5～10分、6x6で約15～25分です。</p>
             
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">操作方法</h3>
             <div class="grid md:grid-cols-2 gap-4 text-left">
@@ -170,7 +193,7 @@
                 <div>
                     <h4 class="text-lg font-semibold mb-1">スマートフォンの場合</h4>
                     <ul class="list-disc list-inside space-y-1">
-                        <li><strong>情報表示:</strong> マスを長押し (約0.5秒)</li>
+                        <li><strong>情報表示:</strong> マスを長押し (約0.3秒)</li>
                         <li><strong>配置:</strong> マスを短くタップ</li>
                     </ul>
                 </div>
@@ -187,6 +210,8 @@
             <ul class="list-disc list-inside space-y-2 text-left">
                 <li>ソースには「ライフ」があります。ライフは <code class="bg-gray-800 px-1 rounded">5 - 選んだ方向の数</code> で決まります。（例：2方向ならライフは3）</li>
                 <li>ソースを置けるのは、<code class="bg-gray-800 px-1 rounded">(相手のRay数) - (自分のRay数) < これから置くソースのライフ</code> という条件を満たすマスだけです。</li>
+                <li><strong>4ターンライフサイクル:</strong> 4ターンを1周期とし、その周期内で同じライフのソースは一度しか置けません。</li>
+                <li><strong>初期ターン制限:</strong> 最初のターンだけは、2方向以上を選択する必要があります。（4x4では各プレイヤー1ターン目のみ、6x6では各2ターン目まで）</li>
             </ul>
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">ソースの消滅（連鎖）</h3>
             <ul class="list-disc list-inside space-y-2 text-left">
@@ -195,10 +220,8 @@
             </ul>
             <h3 class="text-xl font-bold mt-4 mb-2 text-yellow-300">特殊ルール</h3>
             <ul class="list-disc list-inside space-y-2 text-left">
-                <li><strong>初期ターン制限:</strong> 最初のターンだけは、2方向以上を選択する必要があります。（4x4では各プレイヤー1ターン目のみ、6x6では各2ターン目まで）</li>
                 <li><strong>ターン制限:</strong> 4x4では40ターン、6x6では90ターンが経過すると、その時点のマス数で勝敗が決まります。</li>
                 <li><strong>連続パス:</strong> 2ターン連続でパス（置けるマスがない）をすると、そのプレイヤーの負けになります。</li>
-                <li><strong>プレイ時間の目安:</strong> 4x4は約5～10分、6x6は約15～25分です。</li>
             </ul>
             <div class="text-right mt-6">
                 <button id="how-to-play-close-button" class="bg-indigo-600 hover:bg-indigo-700 px-8 py-2 rounded-lg transition-colors text-white">閉じる</button>
@@ -257,6 +280,7 @@
             const localOptions = document.getElementById('local-options');
             const onlineOptions = document.getElementById('online-options');
             const onlinePlayStartButton = document.getElementById('online-play-start-button');
+            const lifeCycleDisplay = document.getElementById('life-cycle-display');
             
             let state = {};
             let longPressTimer = null;
@@ -373,6 +397,7 @@
                 return {
                     board, boardSize,
                     currentPlayer: firstPlayer, turnCountA, turnCountB, gameOver: false, selectedCell: null,
+                    cycleTurnA: 0, cycleTurnB: 0, usedLivesA: [], usedLivesB: [],
                     consecutivePassesA: 0, consecutivePassesB: 0,
                     gameMode: mode, cpuDifficulty: difficulty,
                     cpuPlayer,
@@ -477,6 +502,17 @@
                 turnCounterEl.textContent = `${totalTurns + 1} / ${maxTurns}`;
                 const scores = calculateScores();
                 scoreAEl.textContent = scores.A; scoreBEl.textContent = scores.B;
+
+                lifeCycleDisplay.innerHTML = '';
+                const usedLives = state.currentPlayer === PLAYER_A ? state.usedLivesA : state.usedLivesB;
+                const playerColor = state.currentPlayer === PLAYER_A ? 'blue' : 'red';
+                for (let i = 1; i <= 4; i++) {
+                    const lifeEl = document.createElement('span');
+                    const isUsed = usedLives.includes(i);
+                    lifeEl.textContent = `L${i}`;
+                    lifeEl.className = `life-indicator border-${playerColor}-400 ${isUsed ? 'life-used' : `life-available bg-${playerColor}-600`}`;
+                    lifeCycleDisplay.appendChild(lifeEl);
+                }
             }
 
             function calculateAllParameters(board) {
@@ -533,11 +569,15 @@
                 const cell = state.board[r][c];
                 const myP = player === PLAYER_A ? cell.paramA : cell.paramB;
                 const opP = player === PLAYER_A ? cell.paramB : cell.paramA;
+                const usedLives = player === PLAYER_A ? state.usedLivesA : state.usedLivesB;
+
                 for (let i = 1; i < 16; i++) {
                     const d = (i & 1) + ((i >> 1) & 1) + ((i >> 2) & 1) + ((i >> 3) & 1);
                     if (d === 0) continue;
+                    const life = 5 - d;
+                    if (usedLives.includes(life)) continue;
                     if (isEarly && d < 2) continue;
-                    if (opP - myP < (5 - d)) return true;
+                    if (opP - myP < life) return true;
                 }
                 return false;
             }
@@ -548,6 +588,14 @@
                 const earlyTurnLimit = state.boardSize === 4 ? 1 : 2;
                 const turnCount = state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB;
                 const isEarly = turnCount < earlyTurnLimit;
+                const usedLives = state.currentPlayer === PLAYER_A ? state.usedLivesA : state.usedLivesB;
+
+                if (usedLives.includes(L)) {
+                     if (!state.isAutoPlaying) {
+                        hideDirectionModal(); showAlertModal(`ライフ${L}のソースは、この周期では既に配置済みです。`);
+                    }
+                    return false;
+                }
                 if (isEarly && d < 2) {
                     if (!state.isAutoPlaying) {
                         hideDirectionModal(); showAlertModal(`最初の${earlyTurnLimit}ターンは、2方向以上を選択してください。`);
@@ -564,7 +612,23 @@
                     return false;
                 }
                 hideDirectionModal();
-                if (state.currentPlayer === PLAYER_A) state.consecutivePassesA = 0; else state.consecutivePassesB = 0;
+                if (state.currentPlayer === PLAYER_A) {
+                    state.consecutivePassesA = 0;
+                    state.usedLivesA.push(L);
+                    state.cycleTurnA++;
+                    if (state.cycleTurnA >= 4) {
+                        state.cycleTurnA = 0;
+                        state.usedLivesA = [];
+                    }
+                } else {
+                    state.consecutivePassesB = 0;
+                    state.usedLivesB.push(L);
+                    state.cycleTurnB++;
+                    if (state.cycleTurnB >= 4) {
+                        state.cycleTurnB = 0;
+                        state.usedLivesB = [];
+                    }
+                }
                 state.board[r][c].source = { owner: state.currentPlayer, directions, life: L };
                 if (state.currentPlayer === PLAYER_A) state.turnCountA++; else state.turnCountB++;
                 await runChainReaction();
@@ -770,6 +834,7 @@
                 const moves = [];
                 const earlyTurnLimit = board.length === 4 ? 1 : 2;
                 const isEarly = turnCount < earlyTurnLimit;
+                const usedLives = player === PLAYER_A ? state.usedLivesA : state.usedLivesB;
                 const directionsList = [];
                 for (let i = 1; i < 16; i++) {
                     const d = [];
@@ -782,15 +847,33 @@
                         const myP = player === PLAYER_A ? cell.paramA : cell.paramB;
                         const opP = player === PLAYER_A ? cell.paramB : cell.paramA;
                         for (const dirs of directionsList) {
+                            const life = 5 - dirs.length;
+                            if(usedLives.includes(life)) continue;
                             if (isEarly && dirs.length < 2) continue;
-                            if (opP - myP < (5 - dirs.length)) moves.push({ r, c, directions: dirs });
+                            if (opP - myP < life) moves.push({ r, c, directions: dirs });
                         }
                     }
                 }
                 return moves;
             }
 
-            function showDirectionModal() { dirCheckboxes.forEach(cb => cb.checked = false); placeButton.disabled = true; directionModal.classList.remove('hidden'); }
+            function showDirectionModal() {
+                dirCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.disabled = false;
+                });
+
+                const { r, c } = state.selectedCell;
+                const size = state.boardSize;
+
+                if (r === 0) document.getElementById('dir-n').disabled = true;
+                if (r === size - 1) document.getElementById('dir-s').disabled = true;
+                if (c === 0) document.getElementById('dir-w').disabled = true;
+                if (c === size - 1) document.getElementById('dir-e').disabled = true;
+
+                placeButton.disabled = true;
+                directionModal.classList.remove('hidden');
+            }
             function hideDirectionModal() { state.selectedCell = null; directionModal.classList.add('hidden'); }
             function showAlertModal(msg) { alertMessageEl.textContent = msg; alertModalEl.classList.remove('hidden'); }
             function hideAlertModal() { alertModalEl.classList.add('hidden'); }
