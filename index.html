@@ -26,13 +26,39 @@
     <!-- プレイモード選択画面 -->
     <div id="play-mode-screen" class="w-full max-w-md mx-auto text-center">
         <h1 class="text-5xl font-bold text-indigo-300 mb-8">RayGame</h1>
+        <div class="bg-gray-700/50 p-8 rounded-lg">
+            <div class="space-y-4">
+                <button id="local-play-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
+                    ローカル対戦
+                </button>
+                <button id="online-play-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
+                    オンライン対戦
+                </button>
+            </div>
+            <p class="text-sm text-gray-400 mt-6">
+                オンライン対戦は現在準備中です。アップデート情報をお待ちください。
+            </p>
+        </div>
+    </div>
+
+    <!-- オンラインメニュー画面 -->
+    <div id="online-menu-screen" class="hidden w-full max-w-md mx-auto text-center">
+        <h1 class="text-5xl font-bold text-indigo-300 mb-8">Online Match</h1>
         <div class="bg-gray-700/50 p-8 rounded-lg space-y-4">
-            <button id="local-play-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
-                ローカル対戦
-            </button>
-            <button id="online-play-button" class="w-full bg-gray-500 cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg text-lg opacity-50">
-                オンライン対戦 (準備中)
-            </button>
+            <button id="random-match-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">ランダムマッチ</button>
+            <button id="private-match-button" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">プライベートマッチ</button>
+            <button id="back-to-play-mode-button" class="mt-8 text-indigo-300 hover:text-indigo-200">← 戻る</button>
+        </div>
+    </div>
+
+    <!-- プライベートマッチ画面 -->
+    <div id="private-match-screen" class="hidden w-full max-w-md mx-auto text-center">
+        <h1 class="text-5xl font-bold text-indigo-300 mb-8">Private Match</h1>
+        <div class="bg-gray-700/50 p-8 rounded-lg space-y-4">
+            <h2 class="text-2xl mb-4">合言葉を入力</h2>
+            <input type="text" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-lg text-center text-lg tracking-widest" placeholder="ROOM ID">
+            <button id="confirm-password-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">決定</button>
+            <button id="back-to-online-menu-button" class="mt-8 text-indigo-300 hover:text-indigo-200">← 戻る</button>
         </div>
     </div>
 
@@ -45,17 +71,25 @@
                 <div><input type="radio" name="board-size" id="size-4" value="4" class="size-radio hidden"><label for="size-4" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">4x4</label></div>
                 <div><input type="radio" name="board-size" id="size-6" value="6" class="size-radio hidden" checked><label for="size-6" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">6x6</label></div>
             </div>
-            <h2 class="text-2xl mb-4">Game Mode</h2>
-            <button id="pvp-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg mb-4 transition-colors">Player vs Player</button>
-            <div class="mt-6"><h3 class="text-xl mb-4">Player vs CPU</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <button class="cpu-mode-button bg-green-600 hover:bg-green-700" data-difficulty="easy">Easy</button>
-                    <button class="cpu-mode-button bg-yellow-600 hover:bg-yellow-700" data-difficulty="medium">Medium</button>
-                    <button class="cpu-mode-button bg-red-600 hover:bg-red-700" data-difficulty="hard">Hard</button>
+            <div id="local-options">
+                <h2 class="text-2xl mb-4">Game Mode</h2>
+                <h3 class="text-xl mb-2">Player vs Player</h3>
+                <button id="pvp-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg mb-4 transition-colors">PLAY</button>
+                <div id="cpu-options" class="mt-6">
+                    <h3 class="text-xl mb-4">Player vs CPU</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div><p class="mb-1">Easy</p><button class="cpu-mode-button w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg" data-difficulty="easy">PLAY</button></div>
+                        <div><p class="mb-1">Medium</p><button class="cpu-mode-button w-full bg-yellow-600 hover:bg-yellow-700 py-2 rounded-lg" data-difficulty="medium">PLAY</button></div>
+                        <div><p class="mb-1">Hard</p><button class="cpu-mode-button w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg" data-difficulty="hard">PLAY</button></div>
+                    </div>
                 </div>
             </div>
+            <div id="online-options" class="hidden">
+                 <h2 class="text-2xl mb-4">Online Match</h2>
+                 <button id="online-play-start-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">PLAY</button>
+            </div>
             <div class="flex justify-between items-center mt-8">
-                <button id="back-to-mode-select-button" class="text-indigo-300 hover:text-indigo-200">← 戻る</button>
+                <button id="back-to-previous-menu-button" class="text-indigo-300 hover:text-indigo-200">← 戻る</button>
                 <button id="menu-how-to-play-button" class="text-indigo-300 hover:text-indigo-200">遊び方</button>
             </div>
         </div>
@@ -136,8 +170,8 @@
                 <div>
                     <h4 class="text-lg font-semibold mb-1">スマートフォンの場合</h4>
                     <ul class="list-disc list-inside space-y-1">
-                        <li><strong>情報表示:</strong> マスを1回タップ</li>
-                        <li><strong>配置:</strong> 同じマスを素早く2回タップ</li>
+                        <li><strong>情報表示:</strong> マスを長押し (約0.5秒)</li>
+                        <li><strong>配置:</strong> マスを短くタップ</li>
                     </ul>
                 </div>
             </div>
@@ -182,6 +216,13 @@
             const gameSetupScreen = document.getElementById('game-setup-screen');
             const localPlayButton = document.getElementById('local-play-button');
             const onlinePlayButton = document.getElementById('online-play-button');
+            const onlineMenuScreen = document.getElementById('online-menu-screen');
+            const randomMatchButton = document.getElementById('random-match-button');
+            const privateMatchButton = document.getElementById('private-match-button');
+            const backToPlayModeButton = document.getElementById('back-to-play-mode-button');
+            const privateMatchScreen = document.getElementById('private-match-screen');
+            const confirmPasswordButton = document.getElementById('confirm-password-button');
+            const backToOnlineMenuButton = document.getElementById('back-to-online-menu-button');
             const gameContainer = document.getElementById('game-container');
             const pvpButton = document.getElementById('pvp-button');
             const cpuModeButtons = document.querySelectorAll('.cpu-mode-button');
@@ -212,32 +253,72 @@
             const howToPlayCloseButton = document.getElementById('how-to-play-close-button');
             const autoFinishButton = document.getElementById('auto-finish-button');
             const surrenderButton = document.getElementById('surrender-button');
-            const backToModeSelectButton = document.getElementById('back-to-mode-select-button');
+            const backToPreviousMenuButton = document.getElementById('back-to-previous-menu-button');
+            const localOptions = document.getElementById('local-options');
+            const onlineOptions = document.getElementById('online-options');
+            const onlinePlayStartButton = document.getElementById('online-play-start-button');
             
             let state = {};
-            let lastTap = { r: -1, c: -1, time: 0 };
+            let longPressTimer = null;
+            const LONG_PRESS_DURATION = 500;
+            let setupOrigin = 'play-mode-screen';
 
             const goToMainMenu = () => {
                 gameContainer.classList.add('hidden');
                 gameSetupScreen.classList.add('hidden');
                 gameOverScreen.classList.add('hidden');
+                onlineMenuScreen.classList.add('hidden');
+                privateMatchScreen.classList.add('hidden');
                 playModeScreen.classList.remove('hidden');
             };
 
             localPlayButton.addEventListener('click', () => {
                 playModeScreen.classList.add('hidden');
                 gameSetupScreen.classList.remove('hidden');
+                localOptions.classList.remove('hidden');
+                onlineOptions.classList.add('hidden');
+                setupOrigin = 'play-mode-screen';
             });
             onlinePlayButton.addEventListener('click', () => {
                 showAlertModal('オンライン対戦は現在準備中です。');
             });
-            backToModeSelectButton.addEventListener('click', () => {
-                gameSetupScreen.classList.add('hidden');
+            backToPlayModeButton.addEventListener('click', () => {
+                onlineMenuScreen.classList.add('hidden');
                 playModeScreen.classList.remove('hidden');
+            });
+            randomMatchButton.addEventListener('click', () => {
+                onlineMenuScreen.classList.add('hidden');
+                gameSetupScreen.classList.remove('hidden');
+                localOptions.classList.add('hidden');
+                onlineOptions.classList.remove('hidden');
+                setupOrigin = 'online-menu-screen';
+            });
+            privateMatchButton.addEventListener('click', () => {
+                onlineMenuScreen.classList.add('hidden');
+                privateMatchScreen.classList.remove('hidden');
+            });
+            backToOnlineMenuButton.addEventListener('click', () => {
+                privateMatchScreen.classList.add('hidden');
+                onlineMenuScreen.classList.remove('hidden');
+            });
+            confirmPasswordButton.addEventListener('click', () => {
+                privateMatchScreen.classList.add('hidden');
+                gameSetupScreen.classList.remove('hidden');
+                localOptions.classList.add('hidden');
+                onlineOptions.classList.remove('hidden');
+                setupOrigin = 'private-match-screen';
+            });
+            backToPreviousMenuButton.addEventListener('click', () => {
+                gameSetupScreen.classList.add('hidden');
+                document.getElementById(setupOrigin).classList.remove('hidden');
             });
 
             pvpButton.addEventListener('click', () => startGame('pvp'));
             cpuModeButtons.forEach(b => b.addEventListener('click', () => startGame('pvc', b.dataset.difficulty)));
+            onlinePlayStartButton.addEventListener('click', () => {
+                showAlertModal('オンライン対戦は現在準備中です。');
+            });
+
             mainMenuButton.addEventListener('click', goToMainMenu);
             gameOverMenuButton.addEventListener('click', goToMainMenu);
             restartButton.addEventListener('click', () => {
@@ -252,6 +333,7 @@
             howToPlayCloseButton.addEventListener('click', hideHowToPlay);
             autoFinishButton.addEventListener('click', autoFinishGame);
             surrenderButton.addEventListener('click', handleSurrender);
+            alertOkButton.addEventListener('click', hideAlertModal);
 
             function startGame(mode, difficulty = null) {
                 const boardSize = parseInt(document.querySelector('input[name="board-size"]:checked').value);
@@ -306,6 +388,8 @@
                 document.onmousemove = handleMouseMove;
                 
                 boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });
+                boardEl.addEventListener('touchend', handleCellTouchEnd);
+                boardEl.addEventListener('touchmove', handleCellTouchMove);
                 document.addEventListener('touchstart', (e) => {
                     if (!boardEl.contains(e.target)) {
                         handleCellMouseOut();
@@ -314,7 +398,6 @@
 
                 placeButton.onclick = handlePlaceButtonClick;
                 cancelButton.onclick = hideDirectionModal;
-                alertOkButton.onclick = hideAlertModal;
                 dirCheckboxes.forEach(cb => cb.onchange = () => { placeButton.disabled = ![...dirCheckboxes].some(c => c.checked); });
             }
             
@@ -721,26 +804,14 @@
                 
                 e.preventDefault();
 
+                clearTimeout(longPressTimer); // Clear any previous timer
+
                 const r = parseInt(cellEl.dataset.r);
                 const c = parseInt(cellEl.dataset.c);
-                const now = new Date().getTime();
-                const timeSince = now - lastTap.time;
+                const touch = e.touches[0];
 
-                if (timeSince < 300 && timeSince > 0 && lastTap.r === r && lastTap.c === c) {
-                    lastTap = { r: -1, c: -1, time: 0 };
-                    handleCellMouseOut();
-                    
-                    if (state.board[r][c].source) return;
-                    const turnCount = state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB;
-                    if (!isPlaceable(r, c, state.currentPlayer, turnCount)) {
-                        showAlertModal("このマスには配置できる方向がありません。");
-                        return;
-                    }
-                    state.selectedCell = { r, c };
-                    showDirectionModal();
-                } else {
-                    lastTap = { r, c, time: now };
-                    
+                longPressTimer = setTimeout(() => {
+                    longPressTimer = null;
                     const cell = state.board[r][c];
                     let tooltipContent = '';
                     if (cell.source) {
@@ -754,13 +825,43 @@
                     if (tooltipContent) {
                         sourceTooltipEl.innerHTML = tooltipContent;
                         sourceTooltipEl.classList.remove('hidden');
-                        const touch = e.touches[0];
                         sourceTooltipEl.style.left = `${touch.pageX + 15}px`;
                         sourceTooltipEl.style.top = `${touch.pageY + 15}px`;
-                    } else {
-                        handleCellMouseOut();
                     }
+                }, LONG_PRESS_DURATION);
+            }
+
+            function handleCellTouchEnd(e) {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                    
+                    const cellEl = e.target.closest('.cell');
+                    if (!cellEl) return;
+                    
+                    const r = parseInt(cellEl.dataset.r);
+                    const c = parseInt(cellEl.dataset.c);
+
+                    if (state.board[r][c].source) return;
+                    const turnCount = state.currentPlayer === PLAYER_A ? state.turnCountA : state.turnCountB;
+                    if (!isPlaceable(r, c, state.currentPlayer, turnCount)) {
+                        showAlertModal("このマスには配置できる方向がありません。");
+                        return;
+                    }
+                    state.selectedCell = { r, c };
+                    showDirectionModal();
                 }
+                setTimeout(() => {
+                    handleCellMouseOut();
+                }, 1500);
+            }
+
+            function handleCellTouchMove(e) {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                handleCellMouseOut();
             }
 
             function handleCellMouseOver(e) {
@@ -784,4 +885,3 @@
     </script>
 </body>
 </html>
-
