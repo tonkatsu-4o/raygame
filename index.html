@@ -43,136 +43,113 @@
 </head>
 <body class="bg-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-2 sm:p-4">
 
-    <div class="flex justify-center w-full">
-        <!-- Left Ad (PC Only) -->
-        <div id="ad-left" class="hidden xl:block w-40 p-4">
-            <!-- admax -->
-            <script src="https://adm.shinobi.jp/s/c6f7f05b3248eac3d6fb34fd05208562"></script>
-            <!-- admax -->
+    <div class="w-full max-w-4xl mx-auto">
+        <!-- プレイモード選択画面 -->
+        <div id="play-mode-screen" class="w-full max-w-md mx-auto text-center">
+            <h1 class="text-5xl font-bold text-indigo-300 mb-8">RayGame</h1>
+            <div class="bg-gray-700/50 p-8 rounded-lg">
+                <div class="space-y-4">
+                    <button id="local-play-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
+                        ローカル対戦
+                    </button>
+                    <button id="online-play-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
+                        オンライン対戦
+                    </button>
+                </div>
+                <p class="text-sm text-gray-400 mt-6">
+                    オンライン対戦は現在準備中です。アップデート情報をお待ちください。
+                </p>
+            </div>
         </div>
 
-        <div class="w-full max-w-4xl">
-            <!-- プレイモード選択画面 -->
-            <div id="play-mode-screen" class="w-full max-w-md mx-auto text-center">
-                <h1 class="text-5xl font-bold text-indigo-300 mb-8">RayGame</h1>
-                <div class="bg-gray-700/50 p-8 rounded-lg">
-                    <div class="space-y-4">
-                        <button id="local-play-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
-                            ローカル対戦
-                        </button>
-                        <button id="online-play-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">
-                            オンライン対戦
-                        </button>
-                    </div>
-                    <p class="text-sm text-gray-400 mt-6">
-                        オンライン対戦は現在準備中です。アップデート情報をお待ちください。
-                    </p>
-                </div>
+        <!-- オンラインメニュー画面 -->
+        <div id="online-menu-screen" class="hidden w-full max-w-md mx-auto text-center">
+            <h1 class="text-5xl font-bold text-indigo-300 mb-8">Online Match</h1>
+            <div class="bg-gray-700/50 p-8 rounded-lg space-y-4">
+                <button id="random-match-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">ランダムマッチ</button>
+                <button id="private-match-button" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">プライベートマッチ</button>
+                <button id="back-to-play-mode-button" class="mt-8 text-indigo-300 hover:text-indigo-200">← 戻る</button>
             </div>
+        </div>
 
-            <!-- オンラインメニュー画面 -->
-            <div id="online-menu-screen" class="hidden w-full max-w-md mx-auto text-center">
-                <h1 class="text-5xl font-bold text-indigo-300 mb-8">Online Match</h1>
-                <div class="bg-gray-700/50 p-8 rounded-lg space-y-4">
-                    <button id="random-match-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">ランダムマッチ</button>
-                    <button id="private-match-button" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">プライベートマッチ</button>
-                    <button id="back-to-play-mode-button" class="mt-8 text-indigo-300 hover:text-indigo-200">← 戻る</button>
-                </div>
+        <!-- プライベートマッチ画面 -->
+        <div id="private-match-screen" class="hidden w-full max-w-md mx-auto text-center">
+            <h1 class="text-5xl font-bold text-indigo-300 mb-8">Private Match</h1>
+            <div class="bg-gray-700/50 p-8 rounded-lg space-y-4">
+                <h2 class="text-2xl mb-4">合言葉を入力</h2>
+                <input type="text" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-lg text-center text-lg tracking-widest" placeholder="ROOM ID">
+                <button id="confirm-password-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">決定</button>
+                <button id="back-to-online-menu-button" class="mt-8 text-indigo-300 hover:text-indigo-200">← 戻る</button>
             </div>
+        </div>
 
-            <!-- プライベートマッチ画面 -->
-            <div id="private-match-screen" class="hidden w-full max-w-md mx-auto text-center">
-                <h1 class="text-5xl font-bold text-indigo-300 mb-8">Private Match</h1>
-                <div class="bg-gray-700/50 p-8 rounded-lg space-y-4">
-                    <h2 class="text-2xl mb-4">合言葉を入力</h2>
-                    <input type="text" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-lg text-center text-lg tracking-widest" placeholder="ROOM ID">
-                    <button id="confirm-password-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">決定</button>
-                    <button id="back-to-online-menu-button" class="mt-8 text-indigo-300 hover:text-indigo-200">← 戻る</button>
+        <!-- ゲーム設定画面 -->
+        <div id="game-setup-screen" class="hidden w-full max-w-md mx-auto text-center">
+            <h1 class="text-5xl font-bold text-indigo-300 mb-8">Game Setup</h1>
+            <div class="bg-gray-700/50 p-8 rounded-lg">
+                <h2 class="text-2xl mb-4">Board Size</h2>
+                <div class="flex justify-center space-x-4 mb-6">
+                    <div><input type="radio" name="board-size" id="size-4" value="4" class="size-radio hidden"><label for="size-4" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">4x4</label></div>
+                    <div><input type="radio" name="board-size" id="size-6" value="6" class="size-radio hidden" checked><label for="size-6" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">6x6</label></div>
                 </div>
-            </div>
-
-            <!-- ゲーム設定画面 -->
-            <div id="game-setup-screen" class="hidden w-full max-w-md mx-auto text-center">
-                <h1 class="text-5xl font-bold text-indigo-300 mb-8">Game Setup</h1>
-                <div class="bg-gray-700/50 p-8 rounded-lg">
-                    <h2 class="text-2xl mb-4">Board Size</h2>
-                    <div class="flex justify-center space-x-4 mb-6">
-                        <div><input type="radio" name="board-size" id="size-4" value="4" class="size-radio hidden"><label for="size-4" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">4x4</label></div>
-                        <div><input type="radio" name="board-size" id="size-6" value="6" class="size-radio hidden" checked><label for="size-6" class="size-label cursor-pointer border-2 border-gray-500 rounded-lg px-4 py-2 transition-colors">6x6</label></div>
-                    </div>
-                    <div id="local-options">
-                        <h2 class="text-2xl mb-4">Game Mode</h2>
-                        <h3 class="text-xl mb-2">Player vs Player</h3>
-                        <button id="pvp-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg mb-4 transition-colors">PLAY</button>
-                        <div id="cpu-options" class="mt-6">
-                            <h3 class="text-xl mb-4">Player vs CPU</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div><p class="mb-1">Easy</p><button class="cpu-mode-button w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg" data-difficulty="easy">PLAY</button></div>
-                                <div><p class="mb-1">Medium</p><button class="cpu-mode-button w-full bg-yellow-600 hover:bg-yellow-700 py-2 rounded-lg" data-difficulty="medium">PLAY</button></div>
-                                <div><p class="mb-1">Hard</p><button class="cpu-mode-button w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg" data-difficulty="hard">PLAY</button></div>
-                            </div>
+                <div id="local-options">
+                    <h2 class="text-2xl mb-4">Game Mode</h2>
+                    <h3 class="text-xl mb-2">Player vs Player</h3>
+                    <button id="pvp-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg mb-4 transition-colors">PLAY</button>
+                    <div id="cpu-options" class="mt-6">
+                        <h3 class="text-xl mb-4">Player vs CPU</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div><p class="mb-1">Easy</p><button class="cpu-mode-button w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg" data-difficulty="easy">PLAY</button></div>
+                            <div><p class="mb-1">Medium</p><button class="cpu-mode-button w-full bg-yellow-600 hover:bg-yellow-700 py-2 rounded-lg" data-difficulty="medium">PLAY</button></div>
+                            <div><p class="mb-1">Hard</p><button class="cpu-mode-button w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg" data-difficulty="hard">PLAY</button></div>
                         </div>
                     </div>
-                    <div id="online-options" class="hidden">
-                         <h2 class="text-2xl mb-4">Online Match</h2>
-                         <button id="online-play-start-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">PLAY</button>
-                    </div>
-                    <div class="flex justify-between items-center mt-8">
-                        <button id="back-to-previous-menu-button" class="text-indigo-300 hover:text-indigo-200">← 戻る</button>
-                        <button id="menu-how-to-play-button" class="text-indigo-300 hover:text-indigo-200">遊び方</button>
-                    </div>
                 </div>
-            </div>
-
-            <!-- ゲーム画面 -->
-            <div id="game-container" class="hidden w-full">
-                <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4 text-indigo-300">RayGame</h1>
-                <div id="info-panel" class="flex flex-col sm:flex-row justify-between items-center bg-gray-700/50 backdrop-blur-sm p-3 sm:p-4 rounded-lg mb-4 gap-3">
-                    <div><h2 class="text-lg sm:text-xl">Turn: <span id="turn-counter" class="font-bold text-2xl">1</span></h2></div>
-                    <div class="text-center">
-                        <h2 class="text-lg sm:text-xl">Player: <span id="current-player" class="font-bold text-2xl"></span></h2>
-                        <div id="life-cycle-display" class="flex justify-center items-center space-x-2 mt-1"></div>
-                    </div>
-                    <div class="flex space-x-6 sm:space-x-8 text-center">
-                        <div><h3 class="text-base sm:text-lg text-blue-400">Player A</h3><p id="score-a" class="text-xl sm:text-2xl font-bold">0</p></div>
-                        <div><h3 class="text-base sm:text-lg text-red-400">Player B</h3><p id="score-b" class="text-xl sm:text-2xl font-bold">0</p></div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button id="surrender-button" class="text-red-400 hover:text-red-300 px-2">Surrender</button>
-                        <button id="auto-finish-button" class="text-yellow-300 hover:text-yellow-200 px-2">Auto Finish</button>
-                        <button id="game-how-to-play-button" class="text-indigo-300 hover:text-indigo-200 px-2">遊び方</button>
-                        <button id="main-menu-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Menu</button>
-                    </div>
+                <div id="online-options" class="hidden">
+                     <h2 class="text-2xl mb-4">Online Match</h2>
+                     <button id="online-play-start-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors">PLAY</button>
                 </div>
-                <div id="board-wrapper" class="relative w-full max-w-[70vh] sm:max-w-xl mx-auto aspect-square">
-                    <div id="game-over-screen" class="hidden absolute inset-0 bg-black/70 z-20 flex flex-col items-center justify-center rounded-lg text-center p-4">
-                        <h2 id="game-over-title" class="text-4xl font-bold mb-2">Game Over</h2>
-                        <p id="game-over-message" class="text-xl mb-6"></p>
-                        <div class="flex space-x-4">
-                            <button id="restart-button" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg">Restart</button>
-                            <button id="game-over-menu-button" class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg">Main Menu</button>
-                        </div>
-                    </div>
-                    <div id="ray-container" class="absolute inset-0 z-0"></div>
-                    <div id="board" class="relative grid gap-1 bg-gray-900/80 p-1 sm:p-2 rounded-lg z-10 w-full h-full"></div>
+                <div class="flex justify-between items-center mt-8">
+                    <button id="back-to-previous-menu-button" class="text-indigo-300 hover:text-indigo-200">← 戻る</button>
+                    <button id="menu-how-to-play-button" class="text-indigo-300 hover:text-indigo-200">遊び方</button>
                 </div>
-                <div id="message-area" class="text-center mt-4 h-8 text-yellow-300 font-semibold text-lg"></div>
             </div>
         </div>
 
-        <!-- Right Ad (PC Only) -->
-        <div id="ad-right" class="hidden xl:block w-40 p-4">
-            <!-- admax -->
-            <script src="https://adm.shinobi.jp/s/8831f72f25cf09ff988a98e6f7af9164"></script>
-            <!-- admax -->
+        <!-- ゲーム画面 -->
+        <div id="game-container" class="hidden w-full">
+            <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4 text-indigo-300">RayGame</h1>
+            <div id="info-panel" class="flex flex-col sm:flex-row justify-between items-center bg-gray-700/50 backdrop-blur-sm p-3 sm:p-4 rounded-lg mb-4 gap-3">
+                <div><h2 class="text-lg sm:text-xl">Turn: <span id="turn-counter" class="font-bold text-2xl">1</span></h2></div>
+                <div class="text-center">
+                    <h2 class="text-lg sm:text-xl">Player: <span id="current-player" class="font-bold text-2xl"></span></h2>
+                    <div id="life-cycle-display" class="flex justify-center items-center space-x-2 mt-1"></div>
+                </div>
+                <div class="flex space-x-6 sm:space-x-8 text-center">
+                    <div><h3 class="text-base sm:text-lg text-blue-400">Player A</h3><p id="score-a" class="text-xl sm:text-2xl font-bold">0</p></div>
+                    <div><h3 class="text-base sm:text-lg text-red-400">Player B</h3><p id="score-b" class="text-xl sm:text-2xl font-bold">0</p></div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="surrender-button" class="text-red-400 hover:text-red-300 px-2">Surrender</button>
+                    <button id="auto-finish-button" class="text-yellow-300 hover:text-yellow-200 px-2">Auto Finish</button>
+                    <button id="game-how-to-play-button" class="text-indigo-300 hover:text-indigo-200 px-2">遊び方</button>
+                    <button id="main-menu-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Menu</button>
+                </div>
+            </div>
+            <div id="board-wrapper" class="relative w-full max-w-[70vh] sm:max-w-xl mx-auto aspect-square">
+                <div id="game-over-screen" class="hidden absolute inset-0 bg-black/70 z-20 flex flex-col items-center justify-center rounded-lg text-center p-4">
+                    <h2 id="game-over-title" class="text-4xl font-bold mb-2">Game Over</h2>
+                    <p id="game-over-message" class="text-xl mb-6"></p>
+                    <div class="flex space-x-4">
+                        <button id="restart-button" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg">Restart</button>
+                        <button id="game-over-menu-button" class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg">Main Menu</button>
+                    </div>
+                </div>
+                <div id="ray-container" class="absolute inset-0 z-0"></div>
+                <div id="board" class="relative grid gap-1 bg-gray-900/80 p-1 sm:p-2 rounded-lg z-10 w-full h-full"></div>
+            </div>
+            <div id="message-area" class="text-center mt-4 h-8 text-yellow-300 font-semibold text-lg"></div>
         </div>
-    </div>
-
-    <!-- Bottom Ad (Mobile Only) -->
-    <div id="ad-bottom" class="xl:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900 flex items-center justify-center z-50">
-        <!-- admax -->
-        <script src="https://adm.shinobi.jp/s/b36ce8669705dec3e4cb09b9e4b1acb0"></script>
-        <!-- admax -->
     </div>
 
     <div id="source-tooltip" class="hidden absolute bg-gray-900/80 backdrop-blur-sm border border-gray-500 rounded-md p-2 text-sm z-50"></div>
